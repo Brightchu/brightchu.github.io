@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+
+
+<title>AQI</title>
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+
+<link rel="icon" sizes="128x128" href="favicon128.png">
+<link rel="apple-touch-icon" sizes="128x128" href="favicon128.png">
+<link rel="apple-touch-icon-precomposed" sizes="128x128" href="favicon128.png">
+<link rel="bookmark" href="favicon.ico" type="image/x-icon">
+
+<link rel="manifest" href="/aqi/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#01479c">
+
+<style>
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+	border: 0;
+
+    width: 100%;
+	height: 100vh;
+}
+
+td, th {
+    
+    text-align: left;
+    padding: 8px;
+	border: 0;
+}
+
+tr {
+	background-color: #777777;
+	font-size:300%;
+	
+}
+
+tr:nth-child(odd) {
+    background-color: #022550;
+	color:#b5b5b5;
+	
+}
+</style>
+
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<script>
+$.ajaxSetup({
+   async: false
+ });
+$(document).ready(function(){
+
+var tokenid="9e992de606cd5eb4ec59b506b0ec1c51c0f6fde9";
+var cityarray=[
+    {city:"杭州", spot:"滨江", idx:723},
+	{city:"杭州", spot:"云栖", idx:727},
+	{city:"南通", spot:"城中", idx:844},
+	{city:"南通", spot:"南郊", idx:842},
+	{city:"北京", spot:"亦庄", idx:460},
+	{city:"北京", spot:"南三环", idx:479},
+	{city:"哈尔滨", spot:"阿城", idx:1280},
+	{city:"上海", spot:"虹口", idx:485}
+	];
+
+function colorize(aqi) {
+	
+	var spectrum = [
+		{a:0,  b:"#cccccc",f:"#ffffff"},
+		{a:50, b:"#009966",f:"#ffffff"},
+		{a:100,b:"#ffde33",f:"#000000"},
+		{a:150,b:"#ff9933",f:"#000000"},
+		{a:200,b:"#cc0033",f:"#ffffff"},
+		{a:300,b:"#660099",f:"#ffffff"},
+		{a:500,b:"#7e0023",f:"#ffffff"}
+		];
+
+
+	var i = 0;
+	for (i=0;i<spectrum.length-2;i++) {
+		if (aqi=="-"||aqi<=spectrum[i].a) break;
+	};	
+	return spectrum[i].b
+
+}	
+
+
+function indicator(aqi) {
+	
+	var spectrum = [
+		{a:0,  b:"****"},
+		{a:50, b:"优秀"},
+		{a:100,b:"中等"},
+		{a:150,b:"敏感人群不适"},
+		{a:200,b:"不健康"},
+		{a:300,b:"非常不健康"},
+		{a:500,b:"极度危险"}
+		];
+
+
+	var i = 0;
+	for (i=0;i<spectrum.length-2;i++) {
+		if (aqi=="-"||aqi<=spectrum[i].a) break;
+	};	
+	return spectrum[i].b
+
+}	
+
+function timelag(aqitime,nowtime){
+	var d = new Date();
+    var n = d.getTimezoneOffset();
+	var timediff=Math.round((nowtime-aqitime*1000)/60000)-n;
+	console.log(timediff)
+	if (timediff<0)
+		return "Error" ;
+	else if (timediff<60)
+		return timediff.toString()+" 分钟前";
+	else if (timediff<1800)
+		return (Math.round(timediff/60)).toString()+" 小时前"
+	else
+		return  "数据延迟";
+}
+	
+	for (i=0; i<cityarray.length; i++) {
+
+	
+		$.getJSON("//api.waqi.info/feed/@" + cityarray[i].idx +"/?token="+tokenid, (function(ii) {
+					
+			return function(result){
+				
+				$("#aqi").append( 
+				"<tr>" +
+				"<td style='color:"+colorize(result.data.aqi)+"';'font-weight:bold;'>" +cityarray[ii].city+"</td>" +
+				"<td style='color:"+colorize(result.data.aqi)+"';'font-weight:bold;'>" +cityarray[ii].spot+"</td>" +
+				"<td style='color:"+colorize(result.data.aqi)+"';'font-weight:bold;'>" +result.data.aqi+"</td>" +
+				"<td>" +timelag(result.data.time.v, $.now())+"</td>"+
+				"<td style='color:"+colorize(result.data.aqi)+"';'font-weight:bold;'>" +indicator(result.data.aqi)+"</td>" +
+				"</tr>"
+				);	
+			};
+			})			
+		(i));	
+   }
+	
+
+      
+});
+
+
+</script>
+</head>
+
+<body style='margin:0;padding:0'>
+
+
+<table id="aqi" border="0" cellpadding="0" cellspacing="0">
+  <tr >
+    <th >城市</th>
+    <th >测点</th>
+    <th>指数</th>
+	<th>时间</th>
+	<th>说明</th>
+	
+  </tr>
+  
+</html> 
